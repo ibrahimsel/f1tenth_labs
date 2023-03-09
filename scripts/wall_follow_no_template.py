@@ -38,7 +38,7 @@ class WallFollow:
     def __init__(self) -> None:
         rospy.Subscriber('/scan', LaserScan, self.lidar_callback)
         self.drive_pub = rospy.Publisher(
-            '/nav', AckermannDriveStamped, queue_size=100)
+            '/drive', AckermannDriveStamped, queue_size=10)
         self.speed_x = 0
         self.speed_y = 0
         self.steering_angle = 0
