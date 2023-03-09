@@ -8,20 +8,6 @@ from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Odometry
 from ackermann_msgs.msg import AckermannDriveStamped
 
-"""
-
-    step 1: Process LaserScan and set field of view of 100 degrees(50 to the left and 50 to the right), beyond this range, set the LaserScan range value to 0(m). 
-    Using a sliding 1D convolution window [0.2, 0.2, 0.2, 0.2, 0.2] to make a moving average of LaserScan range. Clipping all value between [0, 4] Find the minimum range value (closest_dist) and its angle (closest_angle) after doing above steps.
-
-    step 2: Make for loop, calculate the distance from the end of each LaserScan to the closest point by calculating the length of the arc (closest_dist * abs(angle_i - closest_angle)). 
-    If its length of arc is less than radius of robot, set its range value to 0.
-
-    step 3: Find the max gap, the maximum sequence of consecutive non-zeros of the range array.
-
-    step 4: Find the angle with the largest range value within the max gap. Set steering angle to be exactly this angle.(If there are several angles with largest range value, set steering angle with the minimum absolute value). 
-    Velocity depends on the range value of the furthest point.
-
-"""
 
 # PID CONTROL PARAMS
 kp = 0
