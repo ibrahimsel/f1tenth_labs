@@ -4,7 +4,7 @@
     <!-- <node pkg="sel_roslab" type="talker.py" name="talker"></node> -->
     <!-- <node pkg="sel_roslab" type="listener.py" name="listener"></node> -->
     <!-- <node pkg="sel_roslab" type="safety_node.py" name="safety_node"></node> -->
-    <node pkg="sel_roslab" type="reactive_gap_follow.py" name="reactive_gap_follow"></node>
+    <!-- <node pkg="sel_roslab" type="reactive_gap_follow.py" name="reactive_gap_follow"></node> -->
     <!-- <node pkg="sel_roslab" type="wall_follow.py" name="wall_follow"></node> -->
     <!-- <node pkg="sel_roslab" type="wall_follow_no_template.py" name="wall_follow_no_template"></node> -->
 </launch>
