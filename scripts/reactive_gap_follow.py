@@ -10,7 +10,7 @@ from ackermann_msgs.msg import AckermannDriveStamped, AckermannDrive
 class reactive_follow_gap:
     def __init__(self):
         lidarscan_topic = '/scan'
-        drive_topic = '/drive'
+        drive_topic = '/nav'
         self.lidar_sub = rospy.Subscriber(
             lidarscan_topic, LaserScan, self.lidar_callback)
         self.drive_pub = rospy.Publisher(
