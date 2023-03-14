@@ -1,56 +1,40 @@
 #!/usr/bin/python3
-import rospy
 from sensor_msgs.msg import LaserScan
-from geometry_msgs.msg import TwistStamped, Pose, Point, Vector3, Quaternion, PoseStamped
-from std_msgs.msg import Header, ColorRGBA, String
-import numpy as np
+from geometry_msgs.msg import PoseStamped
 from ackermann_msgs.msg import AckermannDriveStamped
-import os
 from visualization_msgs.msg import Marker, MarkerArray
+import rospy
+import numpy as np
+import os
+import math
+import uuid
 
 LOOKAHEAD_DISTANCE = 0.5
-
 waypoints_file = open(
-    (os.path.expanduser('~')+'/rcws/logs/wp-2023-03-13-14-35-37.csv'), 'r')
-
-ct = 0
+    (os.path.expanduser('~')+'/rcws/logs/waypoints_file.csv'), 'r')
+ct = 0  # for marker ids
 
 class PurePursuit(object):
     def __init__(self):
+        global ct
         self.pose_sub = rospy.Subscriber(
             '/gt_pose', PoseStamped, self.pose_callback)
-        self.scan_sub = rospy.Subscriber(
-            '/scan', LaserScan, self.scan_callback)
+        # self.scan_sub = rospy.Subscriber(
+            # '/scan', LaserScan, self.scan_callback)
         self.steering_pub = rospy.Publisher(
             '/drive', AckermannDriveStamped, queue_size=10)
-        self.visualize_pub = rospy.Publisher('visualizing', MarkerArray, queue_size=10)
+        self.visualize_pub_markerarray = rospy.Publisher('visualizing', MarkerArray, queue_size=10)
+        self.visualize_pub_marker = rospy.Publisher('visualizing2', Marker, queue_size=10)
+
         self.marker_array = MarkerArray()
-        
-
-    def scan_callback(self, scan_msg):
-        pass
-        
-        
-    def visualize_waypoints(self):
-        pass
-
-    def pose_callback(self, pose_msg):
-        global ct
-        self.pose = pose_msg
-        self.x = pose_msg.pose.position.x
-        self.y = pose_msg.pose.position.y
-        self.theta = pose_msg.pose.orientation.z
+        self.waypoints = []
         contents = waypoints_file.read()
         lines = contents.splitlines()
         for i in lines:
-            ct += 1
             splitted = i.split(",")
             x = float(splitted[0])
             y = float(splitted[1])
-            # angle = 
-            # speed = 
-            # self.publish_steering_angle(speed, angle)
-            # print(f"x: {x}, y: {y}")
+            self.waypoints.append([y,x])
             marker = Marker()
             marker.id = ct
             marker.header.frame_id = "map"
@@ -71,14 +55,50 @@ class PurePursuit(object):
             marker.color.g = 0.0
             marker.color.b = 0.0
             self.marker_array.markers.append(marker)
-        self.visualize_pub.publish(self.marker_array)
+            ct += 1
 
-    def calculate_steering_angle(self, lookahead_point_x, lookahead_point_y, x, y):
-        dx = lookahead_point_x - x
-        dy = lookahead_point_y - y
-        return np.arctan2(dy, dx)
+    def get_closest_waypoint(self, car_point):
+        min_distance = np.inf
+        closest_point = self.waypoints[13]
+        for i in self.waypoints:
+            if math.dist(car_point, i) < min_distance:
+                closest_point = i
+                min_distance = math.dist(car_point, i)
+        marker = Marker()
+        marker.id = -1
+        marker.header.frame_id = "map"
+        marker.type = Marker.CUBE
+        marker.action = Marker.ADD
+        marker.pose.position.x = closest_point[1]
+        marker.pose.position.y = closest_point[0]
+        marker.pose.position.z = 0
+        marker.pose.orientation.x = 0.0
+        marker.pose.orientation.y = 0.0
+        marker.pose.orientation.z = 0.0
+        marker.pose.orientation.w = 1.0
+        marker.scale.x = 0.1
+        marker.scale.y = 0.1
+        marker.scale.z = 0.1
+        marker.color.a = 1.0
+        marker.color.r = 1.0
+        marker.color.g = 1.0
+        marker.color.b = 0.0
+        self.visualize_pub_marker.publish(marker)
+        return closest_point
+    
+    def pose_callback(self, pose_msg):
+        x = pose_msg.pose.position.x
+        y = pose_msg.pose.position.y
+        theta = pose_msg.pose.orientation.z
+        closest_waypoint = self.get_closest_waypoint([y, x])
+        angle = self.calculate_steering_angle(LOOKAHEAD_DISTANCE, closest_waypoint[0] - y)
+        self.visualize_pub_markerarray.publish(self.marker_array)
+        # self.publish_steering(0.3, angle)
+        
+    def calculate_steering_angle(self, L, y):
+        return ((2*y) / (L**2))
 
-    def publish_steering_angle(self, speed, angle):
+    def publish_steering(self, speed, angle):
         msg = AckermannDriveStamped()
         msg.header.stamp = rospy.Time.now()
         msg.header.frame_id = "pure_pursuit"
@@ -92,8 +112,6 @@ def main():
     pp = PurePursuit()
     rospy.spin()
     waypoints_file.close()
-
-
 
 if __name__ == '__main__':
     main()
